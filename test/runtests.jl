@@ -3,6 +3,8 @@ using Test
 
 import Dates: Nanosecond, Second, CompoundPeriod
 
+include("parsing.jl")
+
 
 @testset "duration sanity checks" begin
 
@@ -51,23 +53,4 @@ end
     @test t2 - t1 < 100_000_000
 end
 
-@testset "parsing time zones" begin
-    using Tm.parse
-    using TimeZones
 
-    @test tz("utc") == TimeZone("UTC")
-    @test tz("Etc/gmt+5") == TimeZone("Etc/GMT+5", TimeZones.Class(:ALL))
-    @test tz(TimeZone("UTC")) == TimeZone("UTC")
-    @test Tm.parse.UTC == TimeZone("UTC")
-end
-
-@testset "parsing string dates" begin
-    using Tm.parse
-    using TimeZones
-    using Dates
-    using TimesDates
-
-    p = TimeParser("us/eastern")
-
-    @test p("2019-01-01") == TimeDateZone(DateTime("2019-01-01T00:00:00"), TimeZone("US/Eastern", TimeZones.Class(:ALL)))
-end

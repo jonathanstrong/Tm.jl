@@ -1,8 +1,8 @@
 module parse
 
 import Dates: DateTime
-import TimeZones: TimeZones, TimeZone, timezone_names, @tz_str
-import TimesDates: TimeDateZone
+import TimeZones: TimeZones, TimeZone, timezone_names, @tz_str, astimezone
+import TimesDates: TimeDateZone, TimeDate
 
 export tz, TimeParser
 
@@ -23,11 +23,27 @@ TimeParser(from::String, to::Nothing)       = TimeParser(tz(from), to)
 TimeParser(from::String, to::String)        = TimeParser(tz(from), tz(to))
 
 function (p::TimeParser)(x::String)
-    if length(x) <= ISO_DT_LENGTH
-        return TimeDateZone(DateTime(x), p.from)
-    else
-        error("uh oh")
-    end
+    localized =
+        if length(x) <= ISO_DT_LENGTH 
+            TimeDateZone(DateTime(x), p.from)
+
+        elseif endswith(x, "Z") || occursin(r"[\+-]\d{2}:\d{2}$", x)
+            TimeDateZone(x)
+
+        else
+            try TimeDateZone(TimeDate(x), p.from)
+            catch
+                try
+                    TimeDateZone(x)
+                catch
+                    error("failed to parse datetime string '$x'")
+                end
+            end
+        end
+
+    p.to === nothing && return localized
+
+    astimezone(localized, p.to)
 end
 
 
